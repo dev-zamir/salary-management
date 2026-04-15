@@ -1,0 +1,26 @@
+# Assessment source documents — kept locally for context, never committed
+Software Craftsperson_Python_DevOps.docx
+Salary Management Assessment.docx
+*.docx
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Env files (per-app .gitignore will handle app-specific ones)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
