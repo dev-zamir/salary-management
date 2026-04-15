@@ -192,6 +192,7 @@ Topics include:
 - Bulk-insert strategy for the seed script
 - Where aggregation lives (DB vs application layer)
 - Single git repository for backend and frontend
+- Money representation (integer cents) and currency scope
 
 ## AI Tooling
 

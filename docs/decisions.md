@@ -247,3 +247,65 @@ The *only* things the two apps share are git history and the root
 - A split-repo structure would be more appropriate if multiple teams
   owned each side, or if the frontend were consumed by multiple
   backends. Neither is the case here.
+
+---
+
+## ADR-009: Money representation and currency scope
+
+**Status:** Accepted
+
+**Context**
+The assessment requires a `salary` field on employees. It does not
+specify a unit, a currency, or whether salaries should be comparable
+across countries. Three design questions fall out of that:
+
+1. How do we store money?
+2. Do we track currency at all?
+3. What do cross-country insights actually mean?
+
+**Decision**
+
+1. **Store salary as `salary_cents` (bigint, non-negative).** Whole-unit
+   integers avoid floating-point rounding errors. `BigDecimal` is
+   available via an `Employee#salary` helper for any code that needs
+   whole-currency-unit values.
+2. **Track currency as an ISO 4217 code** on each employee row
+   (`currency`, 3-char, default `"USD"`, CHECK `^[A-Z]{3}$`).
+3. **Within-country insights are first-class; cross-country comparisons
+   are out of scope.** The API will expose min/max/avg salary *within* a
+   country (where every row shares a currency, so the numbers are
+   meaningful) and avg salary by job title *within* a country. We will
+   not expose a "global average salary" or any metric that aggregates
+   across currencies.
+
+**Alternatives considered**
+
+- **`salary` as a float or decimal, no currency column.** Simpler, but
+  dishonest — averaging salaries from India and the United States as
+  raw numbers produces a number with no real-world meaning. It also
+  invites floating-point bugs that we'd rather not debug.
+- **`salary` as a Postgres `numeric` in whole units.** Fine, but
+  integer cents is the industry-standard money representation for
+  exactly this reason and plays nicely with bulk-insert tooling.
+- **Full multi-currency support with FX conversion.** Would need an
+  exchange-rate table, a rate-as-of date, and a conversion service.
+  Out of scope for a 10k-row HR tool.
+
+**Reasoning**
+
+- Integer cents + `BigDecimal` helper is the cheapest way to be correct
+  about money. The extra column and the check constraint cost nothing.
+- Tracking currency without converting between them is honest: the
+  schema can represent the real world, and the insights endpoints
+  simply refuse to answer questions that don't have meaningful answers.
+- Reviewers looking at the schema will ask "why didn't you just use a
+  float?" and "how do you average across countries?" — this ADR
+  pre-answers both.
+
+**Trade-offs**
+
+- The HR manager loses a (misleading) "company-wide average salary"
+  number. In exchange, every number the UI shows is one the user can
+  trust.
+- Future work (FX conversion, historical rate tables, salary bands in
+  a canonical currency) is explicitly deferred.
