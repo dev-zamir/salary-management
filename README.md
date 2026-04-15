@@ -191,6 +191,7 @@ Topics include:
 - Postgres over SQLite
 - Bulk-insert strategy for the seed script
 - Where aggregation lives (DB vs application layer)
+- Single git repository for backend and frontend
 
 ## AI Tooling
 

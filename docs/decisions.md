@@ -193,3 +193,57 @@ Compute aggregations **in PostgreSQL** using `GROUP BY` + `MIN`/`MAX`/`AVG`.
 - Keeps the payload small — the API returns aggregated rows, not the full
   dataset.
 - Scales naturally as the dataset grows.
+
+---
+
+## ADR-008: Single git repository for backend and frontend
+
+**Status:** Accepted
+
+**Context**
+The solution has two independent applications — a Rails API and a React
+SPA. These could live in one repository (siblings under a shared root) or
+in two separate repositories.
+
+**Decision**
+Use a **single git repository** with `backend/` and `frontend/` as
+sibling directories under the root.
+
+**Alternatives considered**
+- **Two separate repositories** — one for the Rails API, one for the
+  React SPA. Each with its own README, issues, and release history.
+
+**Reasoning**
+- **The assessment is graded as one submission.** Reviewers clone once,
+  read one top-level README, and run one set of commands to see the
+  whole solution. Splitting the repo adds friction for no benefit here.
+- **One commit history tells one story.** The brief explicitly asks
+  that commit history show the evolution of the solution. A single
+  repo gives a linear, interleaved narrative across both apps; two
+  repos force reviewers to mentally merge two histories.
+- **Shared artifacts live naturally at the root** — the main README,
+  `docs/` (architecture, ADRs, performance notes, AI prompts), and the
+  eventual `docker-compose.yml`. In a split-repo setup these would
+  either be duplicated or arbitrarily assigned to one side.
+- **Small scope.** One Rails app + one React app + one database. The
+  overhead of tooling a monorepo (workspaces, shared build config, CI
+  matrices) is near zero at this size — we're not using any of it.
+
+**Important clarification**
+This is **not** a "monorepo" in the Nx / Turborepo / pnpm-workspaces
+sense. There is no shared build tooling, no cross-package dependencies,
+and no workspace configuration. The two applications are completely
+self-contained: `cd backend && bundle install` and `cd frontend && npm
+install` each work independently, and neither app needs to know the
+other exists at the tooling level.
+
+The *only* things the two apps share are git history and the root
+`docs/` directory.
+
+**Trade-offs**
+- If the two apps later needed independent release cadences, access
+  controls, or different CI pipelines, splitting would become
+  attractive. None of that applies in this assessment context.
+- A split-repo structure would be more appropriate if multiple teams
+  owned each side, or if the frontend were consumed by multiple
+  backends. Neither is the case here.
