@@ -18,11 +18,15 @@ default: &default
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: <%= ENV["DB_USERNAME"] %>
+  password: <%= ENV["DB_PASSWORD"] %>
+  host: <%= ENV["DB_HOST"] %>
+  port: <%= ENV["DB_PORT"] %>
 
 
 development:
   <<: *default
-  database: backend_development
+  database: emp_salary_backend_development
 
   # The specified database role being used to connect to PostgreSQL.
   # To create additional roles in PostgreSQL see `$ createuser --help`.
@@ -56,7 +60,7 @@ development:
 # Do not set this db to the same as development or production.
 test:
   <<: *default
-  database: backend_test
+  database: emp_salary_backend_test
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
@@ -87,18 +91,18 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    database: backend_production
+    database: emp_salary_backend_production
     username: backend
     password: <%= ENV["BACKEND_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production
-    database: backend_production_cache
+    database: emp_salary_backend_production_cache
     migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
-    database: backend_production_queue
+    database: emp_salary_backend_production_queue
     migrations_paths: db/queue_migrate
   cable:
     <<: *primary_production
-    database: backend_production_cable
+    database: emp_salary_backend_production_cable
     migrations_paths: db/cable_migrate
