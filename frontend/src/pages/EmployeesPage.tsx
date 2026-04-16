@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import {
   Box,
   Button,
+  IconButton,
   TextField,
   Typography,
   InputAdornment,
@@ -12,13 +13,14 @@ import {
   type SelectChangeEvent,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
 import { DataGrid, type GridSortModel, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEmployees } from "../hooks/useEmployees";
-import { createEmployee } from "../api/employees";
+import { createEmployee, updateEmployee } from "../api/employees";
 import EmployeeFormDialog from "../components/EmployeeFormDialog";
-import type { EmployeesQueryParams } from "../types/employee";
+import type { Employee, EmployeesQueryParams } from "../types/employee";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "employees_per_page";
@@ -32,24 +34,38 @@ function getStoredPageSize(): number {
   return 25;
 }
 
-const columns: GridColDef[] = [
-  { field: "full_name", headerName: "Name", flex: 1, minWidth: 180 },
-  { field: "job_title", headerName: "Job Title", flex: 1, minWidth: 180 },
-  { field: "country", headerName: "Country", flex: 0.8, minWidth: 140 },
-  {
-    field: "salary",
-    headerName: "Salary",
-    flex: 0.7,
-    minWidth: 130,
-    type: "number",
-    valueFormatter: (value: number, row) => {
-      if (value == null) return "";
-      return `${row.currency} ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+function getColumns(onEdit: (employee: Employee) => void): GridColDef[] {
+  return [
+    { field: "full_name", headerName: "Name", flex: 1, minWidth: 180 },
+    { field: "job_title", headerName: "Job Title", flex: 1, minWidth: 180 },
+    { field: "country", headerName: "Country", flex: 0.8, minWidth: 140 },
+    {
+      field: "salary",
+      headerName: "Salary",
+      flex: 0.7,
+      minWidth: 130,
+      type: "number",
+      valueFormatter: (value: number, row) => {
+        if (value == null) return "";
+        return `${row.currency} ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      },
     },
-  },
-  { field: "email", headerName: "Email", flex: 1, minWidth: 200, sortable: false },
-  { field: "hired_on", headerName: "Hired On", width: 120 },
-];
+    { field: "email", headerName: "Email", flex: 1, minWidth: 200, sortable: false },
+    { field: "hired_on", headerName: "Hired On", width: 120 },
+    {
+      field: "actions",
+      headerName: "",
+      width: 60,
+      sortable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => (
+        <IconButton size="small" onClick={() => onEdit(params.row as Employee)}>
+          <EditIcon fontSize="small" />
+        </IconButton>
+      ),
+    },
+  ];
+}
 
 interface CustomPaginationProps {
   page: number;
@@ -122,6 +138,9 @@ export default function EmployeesPage() {
   const [searchDebounced, setSearchDebounced] = useState("");
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+
+  const columns = getColumns((employee) => setEditingEmployee(employee));
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -187,6 +206,17 @@ export default function EmployeesPage() {
           queryClient.invalidateQueries({ queryKey: ["employees"] });
         }}
         title="Add Employee"
+      />
+
+      <EmployeeFormDialog
+        open={editingEmployee !== null}
+        onClose={() => setEditingEmployee(null)}
+        onSubmit={async (formData) => {
+          await updateEmployee(editingEmployee!.id, formData);
+          queryClient.invalidateQueries({ queryKey: ["employees"] });
+        }}
+        initialData={editingEmployee}
+        title="Edit Employee"
       />
 
       <DataGrid
