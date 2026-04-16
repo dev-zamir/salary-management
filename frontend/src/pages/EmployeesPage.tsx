@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import {
   Box,
+  Button,
   TextField,
   Typography,
   InputAdornment,
@@ -10,9 +11,13 @@ import {
   FormControl,
   type SelectChangeEvent,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import { DataGrid, type GridSortModel, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEmployees } from "../hooks/useEmployees";
+import { createEmployee } from "../api/employees";
+import EmployeeFormDialog from "../components/EmployeeFormDialog";
 import type { EmployeesQueryParams } from "../types/employee";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -107,6 +112,7 @@ function CustomPagination({ page, pageSize, rowCount, onPageChange, onPageSizeCh
 }
 
 export default function EmployeesPage() {
+  const queryClient = useQueryClient();
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
     pageSize: getStoredPageSize(),
@@ -115,6 +121,7 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -145,6 +152,7 @@ export default function EmployeesPage() {
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h5">Employees</Typography>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
         <TextField
           size="small"
           placeholder="Search by name, email, or job title..."
@@ -161,7 +169,25 @@ export default function EmployeesPage() {
             },
           }}
         />
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setCreateDialogOpen(true)}
+        >
+          Add Employee
+        </Button>
+        </Box>
       </Box>
+
+      <EmployeeFormDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onSubmit={async (formData) => {
+          await createEmployee(formData);
+          queryClient.invalidateQueries({ queryKey: ["employees"] });
+        }}
+        title="Add Employee"
+      />
 
       <DataGrid
         rows={data?.data ?? []}
