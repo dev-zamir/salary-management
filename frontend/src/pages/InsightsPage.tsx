@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -57,6 +57,14 @@ function SummaryCards({ stats }: { stats: CountryStat[] }) {
 
 export default function InsightsPage() {
   const [selectedCountry, setSelectedCountry] = useState("");
+  const jobTitleSectionRef = useRef<HTMLDivElement>(null);
+
+  const selectCountryAndScroll = (country: string) => {
+    setSelectedCountry(country);
+    setTimeout(() => {
+      jobTitleSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
 
   const {
     data: countryStats,
@@ -113,7 +121,7 @@ export default function InsightsPage() {
               <TableRow
                 key={`${row.country}-${row.currency}`}
                 hover
-                onClick={() => setSelectedCountry(row.country)}
+                onClick={() => selectCountryAndScroll(row.country)}
                 sx={{ cursor: "pointer", backgroundColor: selectedCountry === row.country ? "action.selected" : undefined }}
               >
                 <TableCell>{row.country}</TableCell>
@@ -129,7 +137,7 @@ export default function InsightsPage() {
       </TableContainer>
 
       {/* ---- Job title breakdown for selected country ---- */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+      <Box ref={jobTitleSectionRef} sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
         <Typography variant="h6">Salary by Job Title</Typography>
         <TextField
           select
