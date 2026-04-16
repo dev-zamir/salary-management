@@ -34,21 +34,21 @@ module Api
       employees = employees.offset((page - 1) * per_page).limit(per_page)
 
       render json: {
-        data: employees.map { |e| employee_json(e) },
+        data: EmployeeSerializer.many(employees),
         meta: { total: total, page: page, per_page: per_page }
       }
     end
 
     def show
       employee = Employee.find(params[:id])
-      render json: { data: employee_json(employee) }
+      render json: { data: EmployeeSerializer.new(employee).as_json }
     end
 
     def create
       employee = Employee.new(employee_params)
 
       if employee.save
-        render json: { data: employee_json(employee) }, status: :created
+        render json: { data: EmployeeSerializer.new(employee).as_json }, status: :created
       else
         render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
       end
@@ -58,7 +58,7 @@ module Api
       employee = Employee.find(params[:id])
 
       if employee.update(employee_params)
-        render json: { data: employee_json(employee) }
+        render json: { data: EmployeeSerializer.new(employee).as_json }
       else
         render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
       end
@@ -74,22 +74,6 @@ module Api
 
     def employee_params
       params.expect(employee: [:full_name, :job_title, :country, :salary_cents, :currency, :email, :hired_on])
-    end
-
-    def employee_json(employee)
-      {
-        id:           employee.id,
-        full_name:    employee.full_name,
-        job_title:    employee.job_title,
-        country:      employee.country,
-        salary_cents: employee.salary_cents,
-        salary:       employee.salary&.to_f,
-        currency:     employee.currency,
-        email:        employee.email,
-        hired_on:     employee.hired_on,
-        created_at:   employee.created_at,
-        updated_at:   employee.updated_at
-      }
     end
   end
 end
