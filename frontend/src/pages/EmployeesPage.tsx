@@ -288,6 +288,20 @@ export default function EmployeesPage() {
         pageSizeOptions={PAGE_SIZE_OPTIONS}
         disableRowSelectionOnClick
         hideFooter
+        slots={{
+          noRowsOverlay: () => (
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 1 }}>
+              <Typography color="text.secondary">
+                {searchDebounced ? "No employees match your search." : "No employees yet."}
+              </Typography>
+              {!searchDebounced && (
+                <Button size="small" onClick={() => setCreateDialogOpen(true)}>
+                  Add your first employee
+                </Button>
+              )}
+            </Box>
+          ),
+        }}
         sx={{ backgroundColor: "background.paper", minHeight: 400 }}
       />
       <CustomPagination
