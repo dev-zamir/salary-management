@@ -1,13 +1,13 @@
 require "rails_helper"
 
-RSpec.describe "Api::Insights::Salary" do
-  describe "GET /api/insights/by_country" do
+RSpec.describe "Api::V1::Insights::Salary" do
+  describe "GET /api/v1/insights/by_country" do
     it "returns salary stats grouped by country" do
       create(:employee, country: "India", currency: "INR", salary_cents: 500_000_00)
       create(:employee, country: "India", currency: "INR", salary_cents: 1_000_000_00)
       create(:employee, country: "Germany", currency: "EUR", salary_cents: 80_000_00)
 
-      get "/api/insights/by_country"
+      get "/api/v1/insights/by_country"
 
       expect(response).to have_http_status(:ok)
       data = response.parsed_body["data"]
@@ -22,7 +22,7 @@ RSpec.describe "Api::Insights::Salary" do
     end
 
     it "returns an empty array when there are no employees" do
-      get "/api/insights/by_country"
+      get "/api/v1/insights/by_country"
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"]).to eq([])
@@ -31,7 +31,7 @@ RSpec.describe "Api::Insights::Salary" do
     it "handles a country with a single employee" do
       create(:employee, country: "Japan", currency: "JPY", salary_cents: 5_000_000_00)
 
-      get "/api/insights/by_country"
+      get "/api/v1/insights/by_country"
 
       japan = response.parsed_body["data"].find { |d| d["country"] == "Japan" }
       expect(japan["min_salary"]).to eq(japan["max_salary"])
@@ -40,14 +40,14 @@ RSpec.describe "Api::Insights::Salary" do
     end
   end
 
-  describe "GET /api/insights/by_job_title" do
+  describe "GET /api/v1/insights/by_job_title" do
     it "returns salary stats by job title within a country" do
       create(:employee, country: "United States", currency: "USD", job_title: "CTO", salary_cents: 250_000_00)
       create(:employee, country: "United States", currency: "USD", job_title: "CTO", salary_cents: 300_000_00)
       create(:employee, country: "United States", currency: "USD", job_title: "QA Engineer", salary_cents: 80_000_00)
       create(:employee, country: "India", currency: "INR", job_title: "CTO", salary_cents: 5_000_000_00)
 
-      get "/api/insights/by_job_title", params: { country: "United States" }
+      get "/api/v1/insights/by_job_title", params: { country: "United States" }
 
       expect(response).to have_http_status(:ok)
       data = response.parsed_body["data"]
@@ -63,14 +63,14 @@ RSpec.describe "Api::Insights::Salary" do
     end
 
     it "returns 400 when country is missing" do
-      get "/api/insights/by_job_title"
+      get "/api/v1/insights/by_job_title"
 
       expect(response).to have_http_status(:bad_request)
       expect(response.parsed_body["error"]).to include("country")
     end
 
     it "returns an empty array for a country with no employees" do
-      get "/api/insights/by_job_title", params: { country: "Atlantis" }
+      get "/api/v1/insights/by_job_title", params: { country: "Atlantis" }
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"]).to eq([])
@@ -80,7 +80,7 @@ RSpec.describe "Api::Insights::Salary" do
       create(:employee, country: "India", currency: "INR", job_title: "CTO", salary_cents: 5_000_000_00)
       create(:employee, country: "India", currency: "INR", job_title: "QA Engineer", salary_cents: 500_000_00)
 
-      get "/api/insights/by_job_title", params: { country: "India" }
+      get "/api/v1/insights/by_job_title", params: { country: "India" }
 
       titles = response.parsed_body["data"].map { |d| d["job_title"] }
       expect(titles).to eq(["CTO", "QA Engineer"])

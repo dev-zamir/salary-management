@@ -1,7 +1,8 @@
 module Api
-  module Insights
-    class SalaryController < ApplicationController
-      # GET /api/insights/by_country
+  module V1
+    module Insights
+      class SalaryController < ApplicationController
+        # GET /api/v1/insights/by_country
       #
       # Returns salary statistics grouped by country:
       #   min, max, avg salary_cents, employee count, and currency.
@@ -75,6 +76,7 @@ module Api
           max_salary:       (row.max_salary_cents / 100.0).round(2),
           avg_salary:       (avg_cents / 100.0).round(2),
         }
+      end
       end
     end
   end

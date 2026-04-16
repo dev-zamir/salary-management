@@ -309,3 +309,41 @@ across countries. Three design questions fall out of that:
   trust.
 - Future work (FX conversion, historical rate tables, salary bands in
   a canonical currency) is explicitly deferred.
+
+---
+
+## ADR-010: API versioning under /api/v1/
+
+**Status:** Accepted
+
+**Context**
+The API initially lived at `/api/employees` with no version prefix.
+As the application matures, breaking changes to the API contract
+(response shape, field names, pagination semantics) would affect all
+consumers simultaneously.
+
+**Decision**
+Namespace all API routes under `/api/v1/`. Controllers live in
+`Api::V1::` module, directory structure mirrors the namespace
+(`app/controllers/api/v1/`).
+
+**Reasoning**
+- **Forward compatibility**: when a breaking change is needed, a `v2`
+  namespace can be introduced without removing `v1` endpoints.
+  Existing consumers keep working until they're ready to migrate.
+- **Industry standard**: versioned API paths are the most common
+  pattern for JSON APIs and the one reviewers will expect.
+- **Low cost**: one extra directory level and one extra namespace —
+  trivial overhead for meaningful long-term flexibility.
+
+**Alternatives considered**
+- **Header-based versioning** (`Accept: application/vnd.api.v1+json`):
+  more "correct" by REST purists, but harder to test in a browser,
+  harder to route in Rails, and not worth the complexity here.
+- **No versioning**: simpler, but paints us into a corner if the API
+  contract ever needs to change.
+
+**Trade-offs**
+- URLs are slightly longer (`/api/v1/employees` vs `/api/employees`).
+- If we never ship a v2, the `/v1/` prefix is cosmetic. That's fine —
+  it signals intent and costs nothing.

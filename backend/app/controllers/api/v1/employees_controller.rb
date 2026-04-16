@@ -1,5 +1,6 @@
 module Api
-  class EmployeesController < ApplicationController
+  module V1
+    class EmployeesController < ApplicationController
     SORTABLE_COLUMNS = %w[id full_name job_title country salary_cents currency hired_on created_at].freeze
     SORT_DIRECTIONS  = %w[asc desc].freeze
     DEFAULT_PER_PAGE = 25
@@ -74,6 +75,7 @@ module Api
 
     def employee_params
       params.expect(employee: [:full_name, :job_title, :country, :salary_cents, :currency, :email, :hired_on])
+    end
     end
   end
 end

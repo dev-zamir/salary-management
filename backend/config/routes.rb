@@ -3,11 +3,13 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   namespace :api do
-    resources :employees, only: [:index, :show, :create, :update, :destroy]
+    namespace :v1 do
+      resources :employees, only: [:index, :show, :create, :update, :destroy]
 
-    namespace :insights do
-      get "by_country",   to: "salary#by_country"
-      get "by_job_title", to: "salary#by_job_title"
+      namespace :insights do
+        get "by_country",   to: "salary#by_country"
+        get "by_job_title", to: "salary#by_job_title"
+      end
     end
   end
 end
