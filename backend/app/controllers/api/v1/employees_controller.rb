@@ -2,6 +2,8 @@ module Api
   module V1
     class EmployeesController < ApplicationController
     SORTABLE_COLUMNS = %w[id full_name job_title country salary_cents currency hired_on created_at].freeze
+    # Maps frontend display field names to actual DB columns.
+    SORT_ALIASES     = { "salary" => "salary_cents" }.freeze
     SORT_DIRECTIONS  = %w[asc desc].freeze
     DEFAULT_PER_PAGE = 25
     MAX_PER_PAGE     = 100
@@ -25,7 +27,8 @@ module Api
       total = employees.count
 
       # ---- Sorting ----
-      sort_col = SORTABLE_COLUMNS.include?(params[:sort]) ? params[:sort] : "id"
+      sort_param = SORT_ALIASES.fetch(params[:sort].to_s, params[:sort])
+      sort_col = SORTABLE_COLUMNS.include?(sort_param) ? sort_param : "id"
       sort_dir = SORT_DIRECTIONS.include?(params[:direction]) ? params[:direction] : "asc"
       employees = employees.order(sort_col => sort_dir)
 
@@ -35,21 +38,21 @@ module Api
       employees = employees.offset((page - 1) * per_page).limit(per_page)
 
       render json: {
-        data: EmployeeSerializer.many(employees),
+        data: ::EmployeeSerializer.many(employees),
         meta: { total: total, page: page, per_page: per_page }
       }
     end
 
     def show
       employee = Employee.find(params[:id])
-      render json: { data: EmployeeSerializer.new(employee).as_json }
+      render json: { data: ::EmployeeSerializer.new(employee).as_json }
     end
 
     def create
       employee = Employee.new(employee_params)
 
       if employee.save
-        render json: { data: EmployeeSerializer.new(employee).as_json }, status: :created
+        render json: { data: ::EmployeeSerializer.new(employee).as_json }, status: :created
       else
         render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
       end
@@ -59,7 +62,7 @@ module Api
       employee = Employee.find(params[:id])
 
       if employee.update(employee_params)
-        render json: { data: EmployeeSerializer.new(employee).as_json }
+        render json: { data: ::EmployeeSerializer.new(employee).as_json }
       else
         render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
       end
