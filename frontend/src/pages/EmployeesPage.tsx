@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Alert,
   type SelectChangeEvent,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -35,12 +36,24 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const STORAGE_KEY = "employees_per_page";
 
 function getStoredPageSize(): number {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    const parsed = Number(stored);
-    if (PAGE_SIZE_OPTIONS.includes(parsed)) return parsed;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = Number(stored);
+      if (PAGE_SIZE_OPTIONS.includes(parsed)) return parsed;
+    }
+  } catch {
+    // localStorage may be unavailable (private mode, disabled, etc.)
   }
   return 25;
+}
+
+function setStoredPageSize(size: number): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, String(size));
+  } catch {
+    // localStorage may be unavailable — silently continue
+  }
 }
 
 function getColumns(onEdit: (employee: Employee) => void, onDelete: (employee: Employee) => void): GridColDef[] {
@@ -177,6 +190,13 @@ export default function EmployeesPage() {
     return () => clearTimeout(timer);
   }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Reset to page 1 when the sort changes — otherwise the user could
+  // stay on page 5 of the newly sorted data, which almost certainly
+  // isn't what they're looking for.
+  useEffect(() => {
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  }, [sortModel]);
+
   const queryParams: EmployeesQueryParams = {
     page: paginationModel.page + 1, // DataGrid is 0-indexed, API is 1-indexed
     per_page: paginationModel.pageSize,
@@ -189,7 +209,7 @@ export default function EmployeesPage() {
     ...(jobTitleFilter && { job_title: jobTitleFilter }),
   };
 
-  const { data, isLoading } = useEmployees(queryParams);
+  const { data, isLoading, error } = useEmployees(queryParams);
 
   return (
     <Box>
@@ -269,7 +289,8 @@ export default function EmployeesPage() {
         open={editingEmployee !== null}
         onClose={() => setEditingEmployee(null)}
         onSubmit={async (formData) => {
-          await updateEmployee(editingEmployee!.id, formData);
+          if (!editingEmployee) return;
+          await updateEmployee(editingEmployee.id, formData);
           queryClient.invalidateQueries({ queryKey: ["employees"] });
           showSnackbar("Employee updated successfully");
         }}
@@ -279,7 +300,9 @@ export default function EmployeesPage() {
 
       <Dialog
         open={deletingEmployee !== null}
-        onClose={() => setDeletingEmployee(null)}
+        onClose={() => {
+          if (!deleting) setDeletingEmployee(null);
+        }}
       >
         <DialogTitle>Delete Employee</DialogTitle>
         <DialogContent>
@@ -296,12 +319,16 @@ export default function EmployeesPage() {
             variant="contained"
             disabled={deleting}
             onClick={async () => {
+              if (!deletingEmployee) return;
+              const id = deletingEmployee.id;
               setDeleting(true);
               try {
-                await deleteEmployee(deletingEmployee!.id);
+                await deleteEmployee(id);
                 queryClient.invalidateQueries({ queryKey: ["employees"] });
                 showSnackbar("Employee deleted successfully");
                 setDeletingEmployee(null);
+              } catch {
+                showSnackbar("Failed to delete employee", "error");
               } finally {
                 setDeleting(false);
               }
@@ -317,6 +344,12 @@ export default function EmployeesPage() {
         onClose={() => setViewingEmployee(null)}
         employee={viewingEmployee}
       />
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Failed to load employees. Please try again.
+        </Alert>
+      )}
 
       <DataGrid
         rows={data?.data ?? []}
@@ -355,7 +388,7 @@ export default function EmployeesPage() {
         rowCount={data?.meta.total ?? 0}
         onPageChange={(page) => setPaginationModel((prev) => ({ ...prev, page }))}
         onPageSizeChange={(pageSize) => {
-          localStorage.setItem(STORAGE_KEY, String(pageSize));
+          setStoredPageSize(pageSize);
           setPaginationModel({ page: 0, pageSize });
         }}
       />
