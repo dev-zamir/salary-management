@@ -13,6 +13,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Paper,
   CircularProgress,
   Alert,
@@ -27,7 +28,6 @@ function formatSalary(value: number, currency: string): string {
 function SummaryCards({ stats }: { stats: CountryStat[] }) {
   const totalEmployees = stats.reduce((sum, s) => sum + s.employee_count, 0);
   const totalCountries = stats.length;
-  const totalJobTitles = new Set(stats.map((s) => s.country)).size; // unique countries
 
   return (
     <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
@@ -59,8 +59,15 @@ export default function InsightsPage() {
   const [selectedCountry, setSelectedCountry] = useState("");
   const jobTitleSectionRef = useRef<HTMLDivElement>(null);
 
+  // Pagination state for both tables
+  const [countryPage, setCountryPage] = useState(0);
+  const [countryRowsPerPage, setCountryRowsPerPage] = useState(10);
+  const [jobTitlePage, setJobTitlePage] = useState(0);
+  const [jobTitleRowsPerPage, setJobTitleRowsPerPage] = useState(10);
+
   const selectCountryAndScroll = (country: string) => {
     setSelectedCountry(country);
+    setJobTitlePage(0);
     setTimeout(() => {
       jobTitleSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
@@ -96,6 +103,18 @@ export default function InsightsPage() {
     return <Alert severity="error">Failed to load salary insights.</Alert>;
   }
 
+  const countryRows = countryStats ?? [];
+  const paginatedCountryRows = countryRows.slice(
+    countryPage * countryRowsPerPage,
+    countryPage * countryRowsPerPage + countryRowsPerPage
+  );
+
+  const jobTitleRows = jobTitleStats ?? [];
+  const paginatedJobTitleRows = jobTitleRows.slice(
+    jobTitlePage * jobTitleRowsPerPage,
+    jobTitlePage * jobTitleRowsPerPage + jobTitleRowsPerPage
+  );
+
   return (
     <Box>
       <Typography variant="h5" sx={{ mb: 3 }}>Salary Insights</Typography>
@@ -117,7 +136,7 @@ export default function InsightsPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {(countryStats ?? []).map((row) => (
+            {paginatedCountryRows.map((row) => (
               <TableRow
                 key={`${row.country}-${row.currency}`}
                 hover
@@ -134,6 +153,18 @@ export default function InsightsPage() {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={countryRows.length}
+          page={countryPage}
+          onPageChange={(_e, newPage) => setCountryPage(newPage)}
+          rowsPerPage={countryRowsPerPage}
+          onRowsPerPageChange={(e) => {
+            setCountryRowsPerPage(parseInt(e.target.value, 10));
+            setCountryPage(0);
+          }}
+          rowsPerPageOptions={[5, 10, 25]}
+        />
       </TableContainer>
 
       {/* ---- Job title breakdown for selected country ---- */}
@@ -144,7 +175,10 @@ export default function InsightsPage() {
           size="small"
           label="Country"
           value={selectedCountry}
-          onChange={(e) => setSelectedCountry(e.target.value)}
+          onChange={(e) => {
+            setSelectedCountry(e.target.value);
+            setJobTitlePage(0);
+          }}
           sx={{ minWidth: 220 }}
         >
           <MenuItem value="">
@@ -183,7 +217,7 @@ export default function InsightsPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {jobTitleStats.map((row) => (
+              {paginatedJobTitleRows.map((row) => (
                 <TableRow key={row.job_title} hover>
                   <TableCell>{row.job_title}</TableCell>
                   <TableCell align="right">{row.employee_count}</TableCell>
@@ -194,6 +228,18 @@ export default function InsightsPage() {
               ))}
             </TableBody>
           </Table>
+          <TablePagination
+            component="div"
+            count={jobTitleRows.length}
+            page={jobTitlePage}
+            onPageChange={(_e, newPage) => setJobTitlePage(newPage)}
+            rowsPerPage={jobTitleRowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setJobTitleRowsPerPage(parseInt(e.target.value, 10));
+              setJobTitlePage(0);
+            }}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
         </TableContainer>
       )}
     </Box>
