@@ -4,13 +4,18 @@ import {
   TextField,
   Typography,
   InputAdornment,
+  Pagination,
+  Select,
+  MenuItem,
+  FormControl,
+  type SelectChangeEvent,
 } from "@mui/material";
 import { DataGrid, type GridSortModel, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 import { useEmployees } from "../hooks/useEmployees";
 import type { EmployeesQueryParams } from "../types/employee";
 
-const PAGE_SIZE_OPTIONS = [25, 50, 100];
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 const columns: GridColDef[] = [
   { field: "full_name", headerName: "Name", flex: 1, minWidth: 180 },
@@ -30,6 +35,66 @@ const columns: GridColDef[] = [
   { field: "email", headerName: "Email", flex: 1, minWidth: 200, sortable: false },
   { field: "hired_on", headerName: "Hired On", width: 120 },
 ];
+
+interface CustomPaginationProps {
+  page: number;
+  pageSize: number;
+  rowCount: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+}
+
+function CustomPagination({ page, pageSize, rowCount, onPageChange, onPageSizeChange }: CustomPaginationProps) {
+  const pageCount = Math.ceil(rowCount / pageSize);
+  const from = rowCount === 0 ? 0 : page * pageSize + 1;
+  const to = Math.min((page + 1) * pageSize, rowCount);
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        px: 2,
+        py: 1.5,
+        borderTop: "1px solid",
+        borderColor: "divider",
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: 14 }}>
+        <span>Rows per page:</span>
+        <FormControl size="small" variant="outlined">
+          <Select
+            value={pageSize}
+            onChange={(e: SelectChangeEvent<number>) => onPageSizeChange(e.target.value as number)}
+            sx={{ fontSize: 14, height: 32 }}
+          >
+            {PAGE_SIZE_OPTIONS.map((opt) => (
+              <MenuItem key={opt} value={opt}>
+                {opt}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <span style={{ marginLeft: 16 }}>
+          {from}–{to} of {rowCount.toLocaleString()}
+        </span>
+      </Box>
+
+      <Pagination
+        count={pageCount}
+        page={page + 1} // MUI Pagination is 1-indexed
+        onChange={(_e, value) => onPageChange(value - 1)}
+        shape="rounded"
+        color="primary"
+        showFirstButton
+        showLastButton
+        siblingCount={1}
+        boundaryCount={1}
+      />
+    </Box>
+  );
+}
 
 export default function EmployeesPage() {
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
@@ -101,7 +166,15 @@ export default function EmployeesPage() {
         onSortModelChange={setSortModel}
         pageSizeOptions={PAGE_SIZE_OPTIONS}
         disableRowSelectionOnClick
+        hideFooter
         sx={{ backgroundColor: "background.paper", minHeight: 400 }}
+      />
+      <CustomPagination
+        page={paginationModel.page}
+        pageSize={paginationModel.pageSize}
+        rowCount={data?.meta.total ?? 0}
+        onPageChange={(page) => setPaginationModel((prev) => ({ ...prev, page }))}
+        onPageSizeChange={(pageSize) => setPaginationModel({ page: 0, pageSize })}
       />
     </Box>
   );
