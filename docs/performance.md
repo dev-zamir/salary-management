@@ -65,20 +65,59 @@ that Postgres throughput is the bottleneck (not Ruby row generation).
 
 ## 2. Query Performance
 
+### Index strategy
+
+The employees table has 14 indexes covering three categories:
+
+**Filtering (exact match):**
+- `country` — country filter on the list endpoint
+- `job_title` — job title filter
+- `(country, job_title)` — combined filter
+- `email` — partial unique index (WHERE email IS NOT NULL)
+
+**Sorting (B-tree for ORDER BY ... LIMIT):**
+- `salary_cents` — sort by salary (most common user action)
+- `hired_on` — sort by hire date
+- `created_at` — sort by creation date
+
+**Composite (filter + sort in one index scan):**
+- `(country, salary_cents)` — filter by country, sort by salary
+- `(country, hired_on)` — filter by country, sort by hire date
+
+**Search (GIN trigram for ILIKE acceleration):**
+- `full_name gin_trgm_ops` — `ILIKE '%query%'` on names
+- `email gin_trgm_ops` — `ILIKE '%query%'` on emails
+- `job_title gin_trgm_ops` — `ILIKE '%query%'` on job titles
+- Requires the `pg_trgm` extension (enabled in migration)
+
+**Aggregation:**
+- `(country, currency)` — `GROUP BY country, currency` in insights
+
+### EXPLAIN verification
+
+Verified key query patterns via `EXPLAIN`:
+
+| Query pattern | Plan |
+|---|---|
+| Filter country + sort salary | Index Scan Backward (single composite index, no sort) |
+| Sort by salary alone | Index Scan Backward (no sort needed) |
+| ILIKE search | Seq Scan at 10k rows (Postgres optimizer decides full scan is cheaper; trigram index kicks in at larger scales) |
+| GROUP BY country, currency | Seq Scan + HashAggregate at 10k rows (same reason) |
+
 ### Employee list endpoint
 - Paginated via `LIMIT`/`OFFSET` — fine at 10k scale. Keyset pagination
   is only needed if we ever move to millions of rows.
 - Sortable columns are **whitelisted** — this prevents arbitrary
   expressions and makes it safe to pass `sort` as a request param.
+- Sort alias mapping: frontend sends `salary` (display field),
+  backend maps to `salary_cents` (DB column) via `SORT_ALIASES`.
 - Filter params (`country`, `job_title`) use parameterized queries
   against indexed columns.
 
 ### Insights endpoints
-- Single aggregation queries — `GROUP BY country` and
-  `GROUP BY country, job_title`.
-- Supported by indexes:
-  - `CREATE INDEX ON employees (country);`
-  - `CREATE INDEX ON employees (country, job_title);`
+- Single aggregation queries — `GROUP BY country, currency` and
+  `GROUP BY job_title, currency WHERE country = ?`.
+- Supported by composite indexes.
 - Result sets are small (O(countries) or O(countries × titles)),
   cache-friendly.
 

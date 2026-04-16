@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_15_161714) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_16_061142) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_trgm"
 
   create_table "employees", force: :cascade do |t|
     t.string "country", limit: 100, null: false
@@ -24,10 +25,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_15_161714) do
     t.string "job_title", limit: 100, null: false
     t.bigint "salary_cents", null: false
     t.datetime "updated_at", null: false
+    t.index ["country", "currency"], name: "index_employees_on_country_and_currency"
+    t.index ["country", "hired_on"], name: "index_employees_on_country_and_hired_on"
     t.index ["country", "job_title"], name: "index_employees_on_country_and_job_title"
+    t.index ["country", "salary_cents"], name: "index_employees_on_country_and_salary_cents"
     t.index ["country"], name: "index_employees_on_country"
+    t.index ["created_at"], name: "index_employees_on_created_at"
+    t.index ["email"], name: "index_employees_on_email_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["email"], name: "index_employees_on_email_when_present", unique: true, where: "(email IS NOT NULL)"
+    t.index ["full_name"], name: "index_employees_on_full_name_trgm", opclass: :gin_trgm_ops, using: :gin
+    t.index ["hired_on"], name: "index_employees_on_hired_on"
     t.index ["job_title"], name: "index_employees_on_job_title"
+    t.index ["job_title"], name: "index_employees_on_job_title_trgm", opclass: :gin_trgm_ops, using: :gin
+    t.index ["salary_cents"], name: "index_employees_on_salary_cents"
     t.check_constraint "currency::text ~ '^[A-Z]{3}$'::text", name: "currency_iso_4217_shape"
     t.check_constraint "salary_cents >= 0", name: "salary_cents_non_negative"
   end
