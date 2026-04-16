@@ -1,73 +1,81 @@
-# React + TypeScript + Vite
+# Frontend — React SPA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React single-page application for the salary management tool.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + TypeScript (strict mode)
+- Vite 8 (dev server + build)
+- MUI (Material UI) 9 + MUI X DataGrid
+- TanStack Query (server state management)
+- React Router (client-side routing)
+- Axios (HTTP client)
+- Vitest + React Testing Library (tests)
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# Install dependencies
+npm install
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Start the dev server
+npm run dev    # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The frontend expects the Rails API running at `http://localhost:3000/api`.
+Override via the `VITE_API_BASE_URL` environment variable if needed.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Command              | Description                     |
+|----------------------|---------------------------------|
+| `npm run dev`        | Start Vite dev server           |
+| `npm run build`      | TypeScript check + production build |
+| `npm test`           | Run Vitest test suite           |
+| `npm run test:watch` | Run Vitest in watch mode        |
+| `npm run lint`       | ESLint                          |
+| `npm run preview`    | Preview production build        |
+
+## Pages
+
+### Employees (`/employees`)
+- MUI DataGrid with server-side pagination, sorting, and search
+- Numbered page navigation with jump-to-page
+- Per-page preference persisted in localStorage
+- Add, edit, and delete employees via form dialogs
+- Salary displayed with currency prefix and locale formatting
+
+### Salary Insights (`/insights`)
+- Summary cards: total employees, countries, avg headcount
+- Salary by country table: min/max/avg per country
+- Salary by job title: breakdown within a selected country
+- Click a country row or use the dropdown to drill down
+
+## Project Structure
+
 ```
+src/
+├── api/              # Axios API functions
+├── components/       # Reusable components (form dialog, layout)
+├── hooks/            # TanStack Query hooks
+├── pages/            # Route-level page components
+├── test/             # Test setup and helpers
+├── types/            # TypeScript interfaces
+├── constants.ts      # Shared reference data (countries, job titles)
+├── theme.ts          # MUI theme configuration
+├── App.tsx           # Route definitions
+└── main.tsx          # Entry point (providers)
+```
+
+## Running Tests
+
+```bash
+npm test
+```
+
+Current: **17 tests, all passing, ~5s**
+
+Tests cover:
+- EmployeeFormDialog: rendering, pre-filling, submit, cancel, validation errors
+- AppLayout: navigation, routing, redirect
+- Constants: data integrity (countries, currencies, job titles)
