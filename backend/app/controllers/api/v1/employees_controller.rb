@@ -1,84 +1,54 @@
 module Api
   module V1
     class EmployeesController < ApplicationController
-    SORTABLE_COLUMNS = %w[id full_name job_title country salary_cents currency hired_on created_at].freeze
-    # Maps frontend display field names to actual DB columns.
-    SORT_ALIASES     = { "salary" => "salary_cents" }.freeze
-    SORT_DIRECTIONS  = %w[asc desc].freeze
-    DEFAULT_PER_PAGE = 25
-    MAX_PER_PAGE     = 100
+      before_action :set_employee, only: [:show, :update, :destroy]
 
-    def index
-      employees = Employee.all
+      def index
+        query = EmployeeQuery.new(params)
+        employees = query.results
 
-      # ---- Filtering ----
-      employees = employees.where(country: params[:country])     if params[:country].present?
-      employees = employees.where(job_title: params[:job_title]) if params[:job_title].present?
-
-      if params[:search].present?
-        search_term = "%#{Employee.sanitize_sql_like(params[:search])}%"
-        employees = employees.where(
-          "full_name ILIKE :q OR email ILIKE :q OR job_title ILIKE :q",
-          q: search_term
-        )
+        render json: {
+          data: ::EmployeeSerializer.many(employees),
+          meta: { total: query.total, page: query.page, per_page: query.per_page }
+        }
       end
 
-      # ---- Total count (after filters, before pagination) ----
-      total = employees.count
-
-      # ---- Sorting ----
-      sort_param = SORT_ALIASES.fetch(params[:sort].to_s, params[:sort])
-      sort_col = SORTABLE_COLUMNS.include?(sort_param) ? sort_param : "id"
-      sort_dir = SORT_DIRECTIONS.include?(params[:direction]) ? params[:direction] : "asc"
-      employees = employees.order(sort_col => sort_dir)
-
-      # ---- Pagination ----
-      page     = [params.fetch(:page, 1).to_i, 1].max
-      per_page = params.fetch(:per_page, DEFAULT_PER_PAGE).to_i.clamp(1, MAX_PER_PAGE)
-      employees = employees.offset((page - 1) * per_page).limit(per_page)
-
-      render json: {
-        data: ::EmployeeSerializer.many(employees),
-        meta: { total: total, page: page, per_page: per_page }
-      }
-    end
-
-    def show
-      employee = Employee.find(params[:id])
-      render json: { data: ::EmployeeSerializer.new(employee).as_json }
-    end
-
-    def create
-      employee = Employee.new(employee_params)
-
-      if employee.save
-        render json: { data: ::EmployeeSerializer.new(employee).as_json }, status: :created
-      else
-        render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
+      def show
+        render json: { data: ::EmployeeSerializer.new(@employee).as_json }
       end
-    end
 
-    def update
-      employee = Employee.find(params[:id])
+      def create
+        employee = Employee.new(employee_params)
 
-      if employee.update(employee_params)
-        render json: { data: ::EmployeeSerializer.new(employee).as_json }
-      else
-        render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
+        if employee.save
+          render json: { data: ::EmployeeSerializer.new(employee).as_json }, status: :created
+        else
+          render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
+        end
       end
-    end
 
-    def destroy
-      employee = Employee.find(params[:id])
-      employee.destroy!
-      head :no_content
-    end
+      def update
+        if @employee.update(employee_params)
+          render json: { data: ::EmployeeSerializer.new(@employee).as_json }
+        else
+          render json: { errors: @employee.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
 
-    private
+      def destroy
+        @employee.destroy!
+        head :no_content
+      end
 
-    def employee_params
-      params.expect(employee: [:full_name, :job_title, :country, :salary_cents, :currency, :email, :hired_on])
-    end
+      private
+
+      def set_employee
+        @employee = Employee.find(params[:id])
+      end
+
+      def employee_params
+        params.expect(employee: [:full_name, :job_title, :country, :salary_cents, :currency, :email, :hired_on])
+      end
     end
   end
 end

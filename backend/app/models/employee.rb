@@ -19,6 +19,18 @@ class Employee < ApplicationRecord
             format: { with: URI::MailTo::EMAIL_REGEXP, allow_blank: true },
             uniqueness: { case_sensitive: false, allow_blank: true }
 
+  # ---- Scopes ----
+
+  scope :by_country,   ->(country) { where(country: country) if country.present? }
+  scope :by_job_title, ->(title)   { where(job_title: title) if title.present? }
+
+  scope :search, ->(term) {
+    if term.present?
+      sanitized = "%#{sanitize_sql_like(term.to_s[0, 255])}%"
+      where("full_name ILIKE :q OR email ILIKE :q OR job_title ILIKE :q", q: sanitized)
+    end
+  }
+
   # Returns the salary as a BigDecimal in whole currency units (e.g. dollars
   # rather than cents). Kept deliberately small — we don't round or format;
   # presentation concerns live at the serializer/UI boundary.

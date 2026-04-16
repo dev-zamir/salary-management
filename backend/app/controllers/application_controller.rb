@@ -1,16 +1,13 @@
 class ApplicationController < ActionController::API
-  # Order matters: rescue_from is matched last-defined-first, so the
-  # generic StandardError handler must come first (lowest priority),
-  # with specific exceptions defined after (higher priority).
+  # rescue_from handlers are matched in reverse definition order:
+  # last defined = highest priority. Generic handlers go first,
+  # specific ones after.
+
   rescue_from StandardError do |e|
     Rails.logger.error("Unhandled error: #{e.class} — #{e.message}")
     Rails.logger.error(e.backtrace&.first(10)&.join("\n"))
 
-    if Rails.env.local?
-      render json: { error: e.message, class: e.class.name }, status: :internal_server_error
-    else
-      render json: { error: "Internal server error" }, status: :internal_server_error
-    end
+    render json: { error: "An unexpected error occurred" }, status: :internal_server_error
   end
 
   rescue_from ActiveRecord::RecordNotFound do |e|
