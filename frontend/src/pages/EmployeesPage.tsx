@@ -24,6 +24,7 @@ import { DataGrid, type GridSortModel, type GridColDef, type GridPaginationModel
 import SearchIcon from "@mui/icons-material/Search";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEmployees } from "../hooks/useEmployees";
+import { COUNTRIES_WITH_CURRENCY, JOB_TITLES } from "../constants";
 import { createEmployee, updateEmployee, deleteEmployee } from "../api/employees";
 import EmployeeFormDialog from "../components/EmployeeFormDialog";
 import { useSnackbar } from "../components/SnackbarProvider";
@@ -150,6 +151,8 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [countryFilter, setCountryFilter] = useState("");
+  const [jobTitleFilter, setJobTitleFilter] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
@@ -181,6 +184,8 @@ export default function EmployeesPage() {
       direction: sortModel[0].sort ?? "asc",
     }),
     ...(searchDebounced && { search: searchDebounced }),
+    ...(countryFilter && { country: countryFilter }),
+    ...(jobTitleFilter && { job_title: jobTitleFilter }),
   };
 
   const { data, isLoading } = useEmployees(queryParams);
@@ -190,6 +195,38 @@ export default function EmployeesPage() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h5">Employees</Typography>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+        <TextField
+          select
+          size="small"
+          label="Country"
+          value={countryFilter}
+          onChange={(e) => {
+            setCountryFilter(e.target.value);
+            setPaginationModel((prev) => ({ ...prev, page: 0 }));
+          }}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">All Countries</MenuItem>
+          {COUNTRIES_WITH_CURRENCY.map((c) => (
+            <MenuItem key={c.country} value={c.country}>{c.country}</MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          select
+          size="small"
+          label="Job Title"
+          value={jobTitleFilter}
+          onChange={(e) => {
+            setJobTitleFilter(e.target.value);
+            setPaginationModel((prev) => ({ ...prev, page: 0 }));
+          }}
+          sx={{ minWidth: 180 }}
+        >
+          <MenuItem value="">All Job Titles</MenuItem>
+          {JOB_TITLES.map((jt) => (
+            <MenuItem key={jt} value={jt}>{jt}</MenuItem>
+          ))}
+        </TextField>
         <TextField
           size="small"
           placeholder="Search by name, email, or job title..."
