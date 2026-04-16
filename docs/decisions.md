@@ -53,10 +53,11 @@ Use **PostgreSQL 15+**.
   writer lock.
 - Better aggregation and query planner for the insights endpoints.
 - Closer to what a real HR tool would run on in production.
-- Trivial to run locally via Docker.
+- First-class support on Render's free tier (the chosen deploy target).
 
 **Trade-offs**
-- Slightly more setup friction than SQLite. Mitigated with docker-compose.
+- Slightly more setup friction than SQLite — developers need a local
+  Postgres server. Documented in the backend README.
 
 ---
 
@@ -222,9 +223,9 @@ sibling directories under the root.
   repo gives a linear, interleaved narrative across both apps; two
   repos force reviewers to mentally merge two histories.
 - **Shared artifacts live naturally at the root** — the main README,
-  `docs/` (architecture, ADRs, performance notes, AI prompts), and the
-  eventual `docker-compose.yml`. In a split-repo setup these would
-  either be duplicated or arbitrarily assigned to one side.
+  `docs/` (architecture, ADRs, performance notes, AI prompts), and
+  the `render.yaml` deployment blueprint. In a split-repo setup these
+  would either be duplicated or arbitrarily assigned to one side.
 - **Small scope.** One Rails app + one React app + one database. The
   overhead of tooling a monorepo (workspaces, shared build config, CI
   matrices) is near zero at this size — we're not using any of it.

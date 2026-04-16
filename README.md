@@ -50,7 +50,7 @@ loading 10,000 employees quickly and repeatably.
 | Database    | PostgreSQL                      |
 | Tests (BE)  | RSpec + FactoryBot              |
 | Tests (FE)  | Vitest + React Testing Library  |
-| Tooling     | Docker / docker-compose for local dev |
+| Deploy      | Render (blueprint in `render.yaml`) |
 
 ## Why This Stack
 
@@ -86,20 +86,17 @@ in [`docs/decisions.md`](docs/decisions.md).
 │   └── README.md          # Backend-specific setup & dev notes
 ├── frontend/              # React application
 │   └── README.md          # Frontend-specific setup & dev notes
-└── docker-compose.yml     # Local dev orchestration (optional)
+└── render.yaml            # Render deployment blueprint
 ```
 
 ## Architecture
 
-A short description will live here once the first end-to-end slice lands. The
-full diagram and component breakdown is in
-[`docs/architecture.md`](docs/architecture.md).
-
-At a glance:
-
 ```
 [ React SPA ] ──HTTP/JSON──▶ [ Rails API ] ──▶ [ PostgreSQL ]
 ```
+
+Full component breakdown, data flows, and index strategy live in
+[`docs/architecture.md`](docs/architecture.md).
 
 ## Getting Started
 
@@ -110,8 +107,7 @@ At a glance:
 
 - Ruby (version in `backend/.ruby-version`)
 - Node.js 20+
-- PostgreSQL 15+
-- (Optional) Docker + docker-compose
+- PostgreSQL 15+ running locally
 
 **Quick start**
 
@@ -145,7 +141,8 @@ Key performance considerations:
 - Make the script **idempotent** and **deterministic** where helpful (seeded
   RNG) so engineers get reproducible data.
 
-Benchmark numbers and methodology will be captured in
+Benchmarked at **~2 seconds for 10,000 rows** on a local PostgreSQL.
+Methodology and EXPLAIN verification for query indexes are in
 [`docs/performance.md`](docs/performance.md).
 
 ## Running Tests
@@ -168,31 +165,40 @@ Test philosophy:
 
 ## Features
 
-### Implemented
+**Employees**
+- List with server-side pagination, sorting, and filtering
+- Numbered page navigation with jump-to-page; per-page preference
+  persisted in localStorage
+- Search across name, email, and job title (debounced)
+- Filter dropdowns for country and job title
+- Row click opens a detail dialog with all employee fields
+- Create, edit, and delete via form dialog with server-side validation
+- Currency auto-fills from country but remains editable
+- Unsaved-changes warning when closing the form dialog
+- Success snackbars after each mutation
 
-_(filled in as the solution evolves — tracked via incremental commits)_
-
-### Planned
-
-- Employee CRUD (list, create, edit, delete) with validation
-- Search and filter employees (by country, job title)
-- Country-level salary stats: min / max / average / count
-- Job-title salary stats within a country
-- Additional HR-useful metrics (e.g. salary distribution, headcount by
-  country, outlier detection)
+**Salary Insights**
+- Summary cards: total employees, countries, avg headcount per country
+- Country table: min / max / avg salary per country, with currency
+- Job title table: breakdown within a selected country (click a
+  country row to drill down, with auto-scroll to the detail table)
+- Paginated client-side tables (5 / 10 / 25 per page)
 
 ## Design Decisions & Trade-offs
 
 Captured as lightweight ADRs in [`docs/decisions.md`](docs/decisions.md).
 Topics include:
 
-- Rails + React + Postgres over Python/FastAPI
-- API-only Rails vs full-stack Rails with Hotwire
-- Postgres over SQLite
-- Bulk-insert strategy for the seed script
-- Where aggregation lives (DB vs application layer)
-- Single git repository for backend and frontend
-- Money representation (integer cents) and currency scope
+- Rails + React + Postgres over Python/FastAPI (ADR-001)
+- PostgreSQL over SQLite (ADR-002)
+- API-only Rails vs full-stack Rails with Hotwire (ADR-003)
+- MUI for the component library (ADR-004)
+- Server-side pagination and sorting (ADR-005)
+- Bulk-insert strategy for the seed script (ADR-006)
+- Where aggregation lives (DB vs application layer) (ADR-007)
+- Single git repository for backend and frontend (ADR-008)
+- Money representation (integer cents) and currency scope (ADR-009)
+- API versioning under `/api/v1/` (ADR-010)
 
 ## AI Tooling
 
@@ -202,7 +208,12 @@ workflows, and notes on where AI helped (and where it didn't) are captured in
 
 ## Demo
 
-A short video walkthrough of the deployed application will be linked here.
+**Video walkthrough:** https://share.zight.com/12uYLDjN
+
+The video covers:
+- Employee list: pagination, sorting, search, filters, detail view
+- Create / edit / delete flows with validation
+- Salary Insights: country-level stats and job title breakdown
 
 ## Artifacts
 
