@@ -95,6 +95,40 @@ RSpec.describe "Api::V1::Employees" do
       expect(body["data"][0]["full_name"]).to eq("John Smith")
     end
 
+    it "sorts by salary alias correctly" do
+      create(:employee, salary_cents: 100_000_00)
+      create(:employee, salary_cents: 200_000_00)
+
+      get "/api/v1/employees", params: { sort: "salary", direction: "desc" }
+
+      salaries = response.parsed_body["data"].map { |e| e["salary_cents"] }
+      expect(salaries).to eq([200_000_00, 100_000_00])
+    end
+
+    it "clamps page to minimum of 1 for zero" do
+      create_list(:employee, 3)
+
+      get "/api/v1/employees", params: { page: 0, per_page: 2 }
+
+      expect(response.parsed_body["meta"]["page"]).to eq(1)
+    end
+
+    it "clamps page to minimum of 1 for negative values" do
+      create_list(:employee, 3)
+
+      get "/api/v1/employees", params: { page: -5, per_page: 2 }
+
+      expect(response.parsed_body["meta"]["page"]).to eq(1)
+    end
+
+    it "searches case-insensitively" do
+      create(:employee, full_name: "John Smith")
+
+      get "/api/v1/employees", params: { search: "JOHN" }
+
+      expect(response.parsed_body["data"].size).to eq(1)
+    end
+
     it "returns salary as a float in whole currency units" do
       create(:employee, salary_cents: 123_456_78)
 
@@ -162,6 +196,12 @@ RSpec.describe "Api::V1::Employees" do
 
       expect(response).to have_http_status(:unprocessable_entity)
     end
+
+    it "returns 404 for a non-existent employee" do
+      patch "/api/v1/employees/0", params: { employee: { full_name: "Updated" } }
+
+      expect(response).to have_http_status(:not_found)
+    end
   end
 
   # ---------- DESTROY ----------
@@ -175,6 +215,12 @@ RSpec.describe "Api::V1::Employees" do
       }.to change(Employee, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
+    end
+
+    it "returns 404 for a non-existent employee" do
+      delete "/api/v1/employees/0"
+
+      expect(response).to have_http_status(:not_found)
     end
   end
 end

@@ -85,5 +85,17 @@ RSpec.describe "Api::V1::Insights::Salary" do
       titles = response.parsed_body["data"].map { |d| d["job_title"] }
       expect(titles).to eq(["CTO", "QA Engineer"])
     end
+
+    it "groups separately by currency within the same job title" do
+      create(:employee, country: "United States", currency: "USD", job_title: "CTO", salary_cents: 250_000_00)
+      create(:employee, country: "United States", currency: "EUR", job_title: "CTO", salary_cents: 200_000_00)
+
+      get "/api/v1/insights/by_job_title", params: { country: "United States" }
+
+      data = response.parsed_body["data"]
+      expect(data.size).to eq(2)
+      currencies = data.map { |d| d["currency"] }.sort
+      expect(currencies).to eq(%w[EUR USD])
+    end
   end
 end
