@@ -7,23 +7,40 @@ Python / DevOps** assessment.
 > **Persona:** HR Manager — needs to manage the employee roster and understand
 > salary distribution across countries and job titles.
 
+## 🔗 Live Demo
+
+| Resource | URL |
+| -------- | --- |
+| **App (frontend)** | https://salary-management-frontend-5azn.onrender.com |
+| **API (backend)**  | https://salary-management-backend-4pj9.onrender.com |
+| **Video walkthrough** | https://share.zight.com/12uYLDjN |
+| **Source** | https://github.com/dev-zamir/salary-management |
+
+> Deployed on Render's free tier. The first request after a period of
+> inactivity takes ~30 seconds while the service spins up from cold.
+> Subsequent requests are fast.
+
+Quick health check: [/up](https://salary-management-backend-4pj9.onrender.com/up)
+returns HTTP 200 when the API is live.
+
 ---
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Tech Stack](#tech-stack)
-3. [Why This Stack](#why-this-stack)
-4. [Repository Layout](#repository-layout)
-5. [Architecture](#architecture)
-6. [Getting Started](#getting-started)
-7. [Seeding 10,000 Employees](#seeding-10000-employees)
-8. [Running Tests](#running-tests)
-9. [Features](#features)
-10. [Design Decisions & Trade-offs](#design-decisions--trade-offs)
-11. [AI Tooling](#ai-tooling)
-12. [Demo](#demo)
-13. [Artifacts](#artifacts)
+1. [Live Demo](#-live-demo)
+2. [Overview](#overview)
+3. [Tech Stack](#tech-stack)
+4. [Why This Stack](#why-this-stack)
+5. [Repository Layout](#repository-layout)
+6. [Architecture](#architecture)
+7. [Getting Started](#getting-started)
+8. [Seeding 10,000 Employees](#seeding-10000-employees)
+9. [Running Tests](#running-tests)
+10. [Features](#features)
+11. [Design Decisions & Trade-offs](#design-decisions--trade-offs)
+12. [AI Tooling](#ai-tooling)
+13. [Demo](#demo)
+14. [Artifacts](#artifacts)
 
 ---
 
