@@ -16,6 +16,16 @@ import { useEmployees } from "../hooks/useEmployees";
 import type { EmployeesQueryParams } from "../types/employee";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+const STORAGE_KEY = "employees_per_page";
+
+function getStoredPageSize(): number {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    const parsed = Number(stored);
+    if (PAGE_SIZE_OPTIONS.includes(parsed)) return parsed;
+  }
+  return 25;
+}
 
 const columns: GridColDef[] = [
   { field: "full_name", headerName: "Name", flex: 1, minWidth: 180 },
@@ -99,7 +109,7 @@ function CustomPagination({ page, pageSize, rowCount, onPageChange, onPageSizeCh
 export default function EmployeesPage() {
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
-    pageSize: 25,
+    pageSize: getStoredPageSize(),
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
   const [search, setSearch] = useState("");
@@ -174,7 +184,10 @@ export default function EmployeesPage() {
         pageSize={paginationModel.pageSize}
         rowCount={data?.meta.total ?? 0}
         onPageChange={(page) => setPaginationModel((prev) => ({ ...prev, page }))}
-        onPageSizeChange={(pageSize) => setPaginationModel({ page: 0, pageSize })}
+        onPageSizeChange={(pageSize) => {
+          localStorage.setItem(STORAGE_KEY, String(pageSize));
+          setPaginationModel({ page: 0, pageSize });
+        }}
       />
     </Box>
   );
