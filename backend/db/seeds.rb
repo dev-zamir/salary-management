@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 # ------------------------------------------------------------------
-# Seed script — loads 10,000 employees from first_names.txt × last_names.txt
+# Seed script — loads 10,000 employees using names randomly picked
+# from first_names.txt (10,000 entries) and last_names.txt (10,000
+# entries).
 #
 # Performance-critical: the assessment notes this script is run regularly
 # by engineers, so wall-clock time matters.
@@ -17,7 +19,8 @@
 #      created_at/updated_at — they're synthetic data).
 # ------------------------------------------------------------------
 
-BATCH_SIZE = 1_000
+EMPLOYEE_COUNT = 10_000
+BATCH_SIZE     = 1_000
 
 # ---- guard: never truncate production data by accident ----
 if Rails.env.production?
@@ -116,35 +119,32 @@ HIRE_START = Date.new(2015, 1, 1)
 HIRE_RANGE = (Date.new(2025, 12, 31) - HIRE_START).to_i # days
 
 # ---- 3. Generate all rows in memory ----
-puts "[seed] Generating 10,000 employee rows in memory..."
+puts "[seed] Generating #{EMPLOYEE_COUNT} employee rows in memory..."
 
-rng       = Random.new(42) # seeded RNG — deterministic across runs
-now       = Time.current   # single timestamp for all rows
-total     = first_names.size * last_names.size
-rows      = Array.new(total)
-index     = 0
+rng  = Random.new(42) # seeded RNG — deterministic across runs
+now  = Time.current   # single timestamp for all rows
+rows = Array.new(EMPLOYEE_COUNT)
 
-first_names.each do |first|
-  last_names.each do |last|
-    loc         = COUNTRIES_WITH_CURRENCY[rng.rand(COUNTRIES_WITH_CURRENCY.size)]
-    country     = loc[:country]
-    currency    = loc[:currency]
-    range       = SALARY_RANGES[country]
-    salary_whole = rng.rand(range)
+EMPLOYEE_COUNT.times do |i|
+  first       = first_names[i]
+  last        = last_names[i]
+  loc         = COUNTRIES_WITH_CURRENCY[rng.rand(COUNTRIES_WITH_CURRENCY.size)]
+  country     = loc[:country]
+  currency    = loc[:currency]
+  range       = SALARY_RANGES[country]
+  salary_whole = rng.rand(range)
 
-    rows[index] = {
-      full_name:    "#{first} #{last}",
-      job_title:    JOB_TITLES[rng.rand(JOB_TITLES.size)],
-      country:      country,
-      salary_cents: salary_whole * 100, # whole units → cents
-      currency:     currency,
-      email:        "#{first.downcase.gsub(/\s/, '')}.#{last.downcase.gsub(/\s/, '')}@example.com",
-      hired_on:     HIRE_START + rng.rand(HIRE_RANGE),
-      created_at:   now,
-      updated_at:   now,
-    }
-    index += 1
-  end
+  rows[i] = {
+    full_name:    "#{first} #{last}",
+    job_title:    JOB_TITLES[rng.rand(JOB_TITLES.size)],
+    country:      country,
+    salary_cents: salary_whole * 100, # whole units → cents
+    currency:     currency,
+    email:        "employee#{i + 1}@example.com",
+    hired_on:     HIRE_START + rng.rand(HIRE_RANGE),
+    created_at:   now,
+    updated_at:   now,
+  }
 end
 
 # ---- 4. Truncate + bulk insert inside a single transaction ----
@@ -160,9 +160,9 @@ ActiveRecord::Base.transaction do
     Employee.insert_all(batch)
     total_inserted += batch.size
     elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - t_start).round(3)
-    puts "[seed]   inserted #{total_inserted}/#{total} (#{elapsed}s)"
+    puts "[seed]   inserted #{total_inserted}/#{EMPLOYEE_COUNT} (#{elapsed}s)"
   end
 
   t_total = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - t_start).round(3)
-  puts "[seed] Done. #{total} employees inserted in #{t_total}s"
+  puts "[seed] Done. #{EMPLOYEE_COUNT} employees inserted in #{t_total}s"
 end
