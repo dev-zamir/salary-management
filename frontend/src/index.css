@@ -1,0 +1,6 @@
+/* MUI's CssBaseline handles most resets. This file is for any
+   app-wide overrides that sit outside MUI's theme. */
+
+body {
+  margin: 0;
+}
