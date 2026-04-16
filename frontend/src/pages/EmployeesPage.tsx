@@ -26,6 +26,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEmployees } from "../hooks/useEmployees";
 import { createEmployee, updateEmployee, deleteEmployee } from "../api/employees";
 import EmployeeFormDialog from "../components/EmployeeFormDialog";
+import { useSnackbar } from "../components/SnackbarProvider";
 import type { Employee, EmployeesQueryParams } from "../types/employee";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -140,6 +141,7 @@ function CustomPagination({ page, pageSize, rowCount, onPageChange, onPageSizeCh
 
 export default function EmployeesPage() {
   const queryClient = useQueryClient();
+  const { showSnackbar } = useSnackbar();
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
     pageSize: getStoredPageSize(),
@@ -220,6 +222,7 @@ export default function EmployeesPage() {
         onSubmit={async (formData) => {
           await createEmployee(formData);
           queryClient.invalidateQueries({ queryKey: ["employees"] });
+          showSnackbar("Employee created successfully");
         }}
         title="Add Employee"
       />
@@ -230,6 +233,7 @@ export default function EmployeesPage() {
         onSubmit={async (formData) => {
           await updateEmployee(editingEmployee!.id, formData);
           queryClient.invalidateQueries({ queryKey: ["employees"] });
+          showSnackbar("Employee updated successfully");
         }}
         initialData={editingEmployee}
         title="Edit Employee"
@@ -258,6 +262,7 @@ export default function EmployeesPage() {
               try {
                 await deleteEmployee(deletingEmployee!.id);
                 queryClient.invalidateQueries({ queryKey: ["employees"] });
+                showSnackbar("Employee deleted successfully");
                 setDeletingEmployee(null);
               } finally {
                 setDeleting(false);
