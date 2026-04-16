@@ -27,6 +27,7 @@ import { useEmployees } from "../hooks/useEmployees";
 import { COUNTRIES_WITH_CURRENCY, JOB_TITLES } from "../constants";
 import { createEmployee, updateEmployee, deleteEmployee } from "../api/employees";
 import EmployeeFormDialog from "../components/EmployeeFormDialog";
+import EmployeeDetailDialog from "../components/EmployeeDetailDialog";
 import { useSnackbar } from "../components/SnackbarProvider";
 import type { Employee, EmployeesQueryParams } from "../types/employee";
 
@@ -67,7 +68,7 @@ function getColumns(onEdit: (employee: Employee) => void, onDelete: (employee: E
       sortable: false,
       disableColumnMenu: true,
       renderCell: (params) => (
-        <Box>
+        <Box onClick={(e) => e.stopPropagation()}>
           <IconButton size="small" onClick={() => onEdit(params.row as Employee)}>
             <EditIcon fontSize="small" />
           </IconButton>
@@ -153,6 +154,7 @@ export default function EmployeesPage() {
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [countryFilter, setCountryFilter] = useState("");
   const [jobTitleFilter, setJobTitleFilter] = useState("");
+  const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
@@ -311,6 +313,12 @@ export default function EmployeesPage() {
         </DialogActions>
       </Dialog>
 
+      <EmployeeDetailDialog
+        open={viewingEmployee !== null}
+        onClose={() => setViewingEmployee(null)}
+        employee={viewingEmployee}
+      />
+
       <DataGrid
         rows={data?.data ?? []}
         columns={columns}
@@ -325,6 +333,7 @@ export default function EmployeesPage() {
         pageSizeOptions={PAGE_SIZE_OPTIONS}
         disableRowSelectionOnClick
         hideFooter
+        onRowClick={(params) => setViewingEmployee(params.row as Employee)}
         slots={{
           noRowsOverlay: () => (
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 1 }}>
