@@ -1,6 +1,8 @@
 module Api
   module V1
     class EmployeesController < ApplicationController
+      include EmployeeLoadable
+
       before_action :set_employee, only: [:show, :update, :destroy]
 
       def index
@@ -38,16 +40,6 @@ module Api
       def destroy
         @employee.destroy!
         head :no_content
-      end
-
-      private
-
-      def set_employee
-        @employee = Employee.find(params[:id])
-      end
-
-      def employee_params
-        params.expect(employee: [:full_name, :job_title, :country, :salary_cents, :currency, :email, :hired_on])
       end
     end
   end
