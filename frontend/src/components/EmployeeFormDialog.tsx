@@ -36,6 +36,8 @@ export default function EmployeeFormDialog({ open, onClose, onSubmit, initialDat
   const [salaryDisplay, setSalaryDisplay] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -55,10 +57,13 @@ export default function EmployeeFormDialog({ open, onClose, onSubmit, initialDat
         setSalaryDisplay("");
       }
       setErrors([]);
+      setDirty(false);
+      setConfirmClose(false);
     }
   }, [open, initialData]);
 
   const handleChange = (field: keyof EmployeeFormData, value: string) => {
+    setDirty(true);
     if (field === "country") {
       const currency = CURRENCY_BY_COUNTRY[value] ?? "USD";
       setForm((prev) => ({ ...prev, country: value, currency }));
@@ -68,6 +73,7 @@ export default function EmployeeFormDialog({ open, onClose, onSubmit, initialDat
   };
 
   const handleSalaryChange = (value: string) => {
+    setDirty(true);
     setSalaryDisplay(value);
     const parsed = parseFloat(value);
     if (!isNaN(parsed) && parsed >= 0) {
@@ -93,8 +99,17 @@ export default function EmployeeFormDialog({ open, onClose, onSubmit, initialDat
     }
   };
 
+  const handleClose = () => {
+    if (dirty) {
+      setConfirmClose(true);
+    } else {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
@@ -190,7 +205,7 @@ export default function EmployeeFormDialog({ open, onClose, onSubmit, initialDat
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} disabled={submitting}>
+        <Button onClick={handleClose} disabled={submitting}>
           Cancel
         </Button>
         <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
@@ -198,5 +213,25 @@ export default function EmployeeFormDialog({ open, onClose, onSubmit, initialDat
         </Button>
       </DialogActions>
     </Dialog>
+
+    <Dialog open={confirmClose} onClose={() => setConfirmClose(false)}>
+      <DialogTitle>Discard changes?</DialogTitle>
+      <DialogContent>
+        You have unsaved changes. Are you sure you want to close?
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setConfirmClose(false)}>Keep Editing</Button>
+        <Button
+          color="error"
+          onClick={() => {
+            setConfirmClose(false);
+            onClose();
+          }}
+        >
+          Discard
+        </Button>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 }
