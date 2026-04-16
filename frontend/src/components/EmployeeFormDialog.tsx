@@ -157,9 +157,17 @@ export default function EmployeeFormDialog({ open, onClose, onSubmit, initialDat
             <TextField
               label="Currency"
               value={form.currency}
-              disabled
-              sx={{ width: 120 }}
-            />
+              onChange={(e) => handleChange("currency", e.target.value)}
+              select
+              required
+              sx={{ width: 140 }}
+            >
+              {[...new Set(COUNTRIES_WITH_CURRENCY.map((c) => c.currency))].sort().map((cur) => (
+                <MenuItem key={cur} value={cur}>
+                  {cur}
+                </MenuItem>
+              ))}
+            </TextField>
           </Box>
 
           <TextField
