@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
@@ -65,10 +65,19 @@ export default function InsightsPage() {
   const [jobTitlePage, setJobTitlePage] = useState(0);
   const [jobTitleRowsPerPage, setJobTitleRowsPerPage] = useState(10);
 
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    };
+  }, []);
+
   const selectCountryAndScroll = (country: string) => {
     setSelectedCountry(country);
     setJobTitlePage(0);
-    setTimeout(() => {
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = setTimeout(() => {
       jobTitleSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
   };

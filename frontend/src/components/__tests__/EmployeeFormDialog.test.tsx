@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { AxiosError } from "axios";
 import { renderWithProviders } from "../../test/render";
 import EmployeeFormDialog from "../EmployeeFormDialog";
 import type { Employee } from "../../types/employee";
@@ -83,8 +84,13 @@ describe("EmployeeFormDialog", () => {
   });
 
   it("displays server validation errors", async () => {
-    const error = {
-      response: { data: { errors: ["Full name can't be blank"] } },
+    const error = new AxiosError("Request failed");
+    error.response = {
+      data: { errors: ["Full name can't be blank"] },
+      status: 422,
+      statusText: "Unprocessable Content",
+      headers: {},
+      config: {} as never,
     };
     const onSubmit = vi.fn().mockRejectedValue(error);
 

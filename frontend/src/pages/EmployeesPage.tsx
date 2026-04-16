@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -151,7 +151,6 @@ export default function EmployeesPage() {
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
-  const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [countryFilter, setCountryFilter] = useState("");
   const [jobTitleFilter, setJobTitleFilter] = useState("");
   const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
@@ -165,18 +164,18 @@ export default function EmployeesPage() {
     (employee) => setDeletingEmployee(employee),
   );
 
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearch(value);
-      if (debounceTimer) clearTimeout(debounceTimer);
-      const timer = setTimeout(() => {
-        setSearchDebounced(value);
+  // Debounce search: waits 400ms after the user stops typing, then
+  // updates the query. Cleanup prevents memory leaks on unmount.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchDebounced(search);
+      if (search !== searchDebounced) {
         setPaginationModel((prev) => ({ ...prev, page: 0 }));
-      }, 400);
-      setDebounceTimer(timer);
-    },
-    [debounceTimer]
-  );
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const queryParams: EmployeesQueryParams = {
     page: paginationModel.page + 1, // DataGrid is 0-indexed, API is 1-indexed
@@ -233,7 +232,7 @@ export default function EmployeesPage() {
           size="small"
           placeholder="Search by name, email, or job title..."
           value={search}
-          onChange={(e) => handleSearchChange(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           sx={{ width: 350 }}
           slotProps={{
             input: {

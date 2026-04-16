@@ -10,6 +10,7 @@ import {
   Box,
   Alert,
 } from "@mui/material";
+import axios from "axios";
 import { COUNTRIES_WITH_CURRENCY, CURRENCY_BY_COUNTRY, JOB_TITLES } from "../constants";
 import type { EmployeeFormData, Employee } from "../types/employee";
 
@@ -88,11 +89,11 @@ export default function EmployeeFormDialog({ open, onClose, onSubmit, initialDat
       await onSubmit(form);
       onClose();
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "response" in err) {
-        const response = (err as { response: { data?: { errors?: string[] } } }).response;
-        setErrors(response.data?.errors ?? ["An unexpected error occurred"]);
+      if (axios.isAxiosError(err) && err.response?.data?.errors) {
+        setErrors(err.response.data.errors);
       } else {
-        setErrors(["An unexpected error occurred"]);
+        console.error("Form submission error:", err);
+        setErrors(["An unexpected error occurred. Please try again."]);
       }
     } finally {
       setSubmitting(false);
@@ -115,8 +116,8 @@ export default function EmployeeFormDialog({ open, onClose, onSubmit, initialDat
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
           {errors.length > 0 && (
             <Alert severity="error">
-              {errors.map((e, i) => (
-                <div key={i}>{e}</div>
+              {errors.map((e) => (
+                <div key={e}>{e}</div>
               ))}
             </Alert>
           )}
