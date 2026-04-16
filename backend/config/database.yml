@@ -88,21 +88,9 @@ test:
 # Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
 # for a full overview on how database connection configuration can be specified.
 #
+# Production uses a single Postgres database (from DATABASE_URL).
+# We do not enable Solid Queue / Cache / Cable in production because
+# this app has no background jobs, websockets, or DB-backed cache.
 production:
-  primary: &primary_production
-    <<: *default
-    database: emp_salary_backend_production
-    username: backend
-    password: <%= ENV["BACKEND_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: emp_salary_backend_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: emp_salary_backend_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: emp_salary_backend_production_cable
-    migrations_paths: db/cable_migrate
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
