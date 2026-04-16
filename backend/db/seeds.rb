@@ -23,7 +23,7 @@ EMPLOYEE_COUNT = 10_000
 BATCH_SIZE     = 1_000
 
 # ---- guard: never truncate production data by accident ----
-if Rails.env.production?
+if Rails.env.production? && ENV["ALLOW_SEED_IN_PRODUCTION"] != "1"
   abort "[seed] Refusing to run in production. Set ALLOW_SEED_IN_PRODUCTION=1 to override."
 end
 
