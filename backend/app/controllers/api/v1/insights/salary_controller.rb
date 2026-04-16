@@ -2,7 +2,13 @@ module Api
   module V1
     module Insights
       class SalaryController < ApplicationController
-        include SalaryAggregatable
+        SALARY_AGGREGATION_SELECT = [
+          "currency",
+          "COUNT(*)          AS employee_count",
+          "MIN(salary_cents) AS min_salary_cents",
+          "MAX(salary_cents) AS max_salary_cents",
+          "AVG(salary_cents) AS avg_salary_cents",
+        ].freeze
 
         # GET /api/v1/insights/by_country
         def by_country

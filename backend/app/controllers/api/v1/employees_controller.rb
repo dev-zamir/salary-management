@@ -25,7 +25,7 @@ module Api
         if employee.save
           render json: { data: ::EmployeeSerializer.new(employee).as_json }, status: :created
         else
-          render json: { errors: employee.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: employee.errors.full_messages }, status: :unprocessable_content
         end
       end
 
@@ -33,7 +33,7 @@ module Api
         if @employee.update(employee_params)
           render json: { data: ::EmployeeSerializer.new(@employee).as_json }
         else
-          render json: { errors: @employee.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: @employee.errors.full_messages }, status: :unprocessable_content
         end
       end
 
@@ -41,7 +41,7 @@ module Api
         if @employee.destroy
           head :no_content
         else
-          render json: { errors: @employee.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: @employee.errors.full_messages }, status: :unprocessable_content
         end
       end
     end

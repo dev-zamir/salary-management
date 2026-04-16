@@ -15,7 +15,7 @@ class ApplicationController < ActionController::API
   end
 
   rescue_from ActiveRecord::RecordNotDestroyed do |e|
-    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_content
   end
 
   rescue_from ActionController::ParameterMissing do |e|

@@ -172,7 +172,7 @@ RSpec.describe "Api::V1::Employees" do
     it "returns validation errors for invalid params" do
       post "/api/v1/employees", params: { employee: { full_name: "" } }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body["errors"]).to be_present
     end
   end
@@ -194,7 +194,7 @@ RSpec.describe "Api::V1::Employees" do
 
       patch "/api/v1/employees/#{employee.id}", params: { employee: { full_name: "" } }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it "returns 404 for a non-existent employee" do
