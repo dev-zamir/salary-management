@@ -20,3 +20,7 @@ export async function updateEmployee(id: number, employee: EmployeeFormData): Pr
   const { data } = await apiClient.patch<EmployeeResponse>(`/employees/${id}`, { employee });
   return data;
 }
+
+export async function deleteEmployee(id: number): Promise<void> {
+  await apiClient.delete(`/employees/${id}`);
+}

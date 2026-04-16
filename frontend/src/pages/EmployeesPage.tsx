@@ -10,15 +10,21 @@ import {
   Select,
   MenuItem,
   FormControl,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
   type SelectChangeEvent,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { DataGrid, type GridSortModel, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEmployees } from "../hooks/useEmployees";
-import { createEmployee, updateEmployee } from "../api/employees";
+import { createEmployee, updateEmployee, deleteEmployee } from "../api/employees";
 import EmployeeFormDialog from "../components/EmployeeFormDialog";
 import type { Employee, EmployeesQueryParams } from "../types/employee";
 
@@ -34,7 +40,7 @@ function getStoredPageSize(): number {
   return 25;
 }
 
-function getColumns(onEdit: (employee: Employee) => void): GridColDef[] {
+function getColumns(onEdit: (employee: Employee) => void, onDelete: (employee: Employee) => void): GridColDef[] {
   return [
     { field: "full_name", headerName: "Name", flex: 1, minWidth: 180 },
     { field: "job_title", headerName: "Job Title", flex: 1, minWidth: 180 },
@@ -55,13 +61,18 @@ function getColumns(onEdit: (employee: Employee) => void): GridColDef[] {
     {
       field: "actions",
       headerName: "",
-      width: 60,
+      width: 100,
       sortable: false,
       disableColumnMenu: true,
       renderCell: (params) => (
-        <IconButton size="small" onClick={() => onEdit(params.row as Employee)}>
-          <EditIcon fontSize="small" />
-        </IconButton>
+        <Box>
+          <IconButton size="small" onClick={() => onEdit(params.row as Employee)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => onDelete(params.row as Employee)} color="error">
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
       ),
     },
   ];
@@ -139,8 +150,13 @@ export default function EmployeesPage() {
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const columns = getColumns((employee) => setEditingEmployee(employee));
+  const columns = getColumns(
+    (employee) => setEditingEmployee(employee),
+    (employee) => setDeletingEmployee(employee),
+  );
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -218,6 +234,40 @@ export default function EmployeesPage() {
         initialData={editingEmployee}
         title="Edit Employee"
       />
+
+      <Dialog
+        open={deletingEmployee !== null}
+        onClose={() => setDeletingEmployee(null)}
+      >
+        <DialogTitle>Delete Employee</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete <strong>{deletingEmployee?.full_name}</strong>? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeletingEmployee(null)} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={deleting}
+            onClick={async () => {
+              setDeleting(true);
+              try {
+                await deleteEmployee(deletingEmployee!.id);
+                queryClient.invalidateQueries({ queryKey: ["employees"] });
+                setDeletingEmployee(null);
+              } finally {
+                setDeleting(false);
+              }
+            }}
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <DataGrid
         rows={data?.data ?? []}
