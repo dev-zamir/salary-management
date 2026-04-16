@@ -38,8 +38,11 @@ module Api
       end
 
       def destroy
-        @employee.destroy!
-        head :no_content
+        if @employee.destroy
+          head :no_content
+        else
+          render json: { errors: @employee.errors.full_messages }, status: :unprocessable_entity
+        end
       end
     end
   end
