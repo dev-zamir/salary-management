@@ -1,0 +1,54 @@
+# Render Blueprint — deploys the full salary management app:
+#   - Postgres database
+#   - Rails API backend
+#   - React static frontend
+#
+# Docs: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: salary-management-db
+    plan: free
+    region: oregon
+    postgresMajorVersion: "16"
+
+services:
+  # ---- Rails API backend ----
+  - type: web
+    name: salary-management-backend
+    runtime: ruby
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: "./bin/render-build.sh"
+    startCommand: "bundle exec rails server -p $PORT"
+    healthCheckPath: /up
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: salary-management-db
+          property: connectionString
+      - key: RAILS_MASTER_KEY
+        sync: false           # Set manually in the Render dashboard
+      - key: RAILS_ENV
+        value: production
+      - key: RACK_ENV
+        value: production
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false           # Set to the frontend URL after it's deployed
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+
+  # ---- React frontend ----
+  - type: web
+    name: salary-management-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: "npm ci && npm run build"
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false           # Set to the backend URL after it's deployed
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
